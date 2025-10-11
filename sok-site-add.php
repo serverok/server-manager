@@ -19,6 +19,33 @@ function verifyPhpVersion($phpVersion) {
     return true;
 }
 
+function findLatestPhpVersion() {
+    $phpRunDir = '/var/run/php/';
+    if (!is_dir($phpRunDir)) {
+        return null;
+    }
+    $files = scandir($phpRunDir);
+    $versions = [];
+
+    if ($files === false) {
+        return null;
+    }
+
+    foreach ($files as $file) {
+        if (preg_match('/^php(\d+\.\d+)-fpm\.sock$/', $file, $matches)) {
+            $versions[] = $matches[1];
+        }
+    }
+
+    if (empty($versions)) {
+        return null;
+    }
+
+    usort($versions, 'version_compare');
+    
+    return end($versions);
+}
+
 function generatePassword() {
     $passwordChars = "abcdefghjkmnpqrstuvwxyz234567890";
     $myPassword = "";
@@ -242,8 +269,12 @@ if (isset($options['p'])) {
 if (isset($options['php'])) {
     $phpVersion = $options['php'];
 } else {
-    echo "ERROR: Please specify PHP version with --php option.\n";
-    exit(1);
+    $phpVersion = findLatestPhpVersion();
+    if ($phpVersion === null) {
+        echo "ERROR: Could not automatically determine PHP version. Please specify one with --php option.\n";
+        exit(1);
+    }
+    echo "PHP version not specified, using latest found version: {$phpVersion}\n";
 }
 
 $appType = "wp";
