@@ -33,8 +33,11 @@ fi
 echo "Making scripts in /usr/serverok/server-manager/bin executable..."
 chmod +x /usr/serverok/server-manager/bin/*
 
-echo "Adding /usr/serverok/server-manager/bin to PATH..."
-echo 'export PATH="$PATH:/usr/serverok/server-manager/bin"' > /etc/profile.d/serverok.sh
-source /etc/profile.d/serverok.sh
+echo "Creating symlinks in /usr/local/bin..."
+for file in /usr/serverok/server-manager/bin/*; do
+  if [ -f "$file" ]; then
+    ln -sf "$file" "/usr/local/bin/$(basename "$file")"
+  fi
+done
 
 echo "Installation complete."

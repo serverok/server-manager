@@ -204,10 +204,9 @@ function createMysqlDatabaseAndUser($username, $passwordMysql) {
 
     $mysqli->query("FLUSH PRIVILEGES");
     $mysqli->close();
-    echo "Successfully created MySQL database and user.\n";
 }
 
-$text = 'ServerOK Nginx Manager.';
+$text = 'ServerOK Server Manager.';
 
 $options = getopt("d:u:p:", ["domain:", "user:", "password:", "php:", "app:"]);
 
@@ -302,7 +301,7 @@ if ($server == "nginx") {
 
 createSiteDataFile($domainName, $username, $docRoot, $phpVersion, $appType);
 
-echo "SFTP {$domainName}\n\n";
+echo "SFTP/SSH {$domainName}\n\n";
 echo "IP = {$ipAddress}\n";
 echo "Port = 22\n";
 echo "User = {$username}\n";
