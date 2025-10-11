@@ -5,6 +5,11 @@
 // Mail: admin@serverok.in
 // Backup a web site in Nginx/Apache Server.
 
+if (posix_getuid() !== 0) {
+    echo "This script must be run as root or with sudo.\n";
+    exit(1);
+}
+
 if ($argc < 2) {
     echo "Usage: php sok-site-backup.php <domain.tld>\n";
     exit(1);

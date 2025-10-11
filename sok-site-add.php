@@ -5,6 +5,10 @@
 // Mail: admin@serverok.in
 // Create web site in Nginx/Apache Server.
 
+if (posix_getuid() !== 0) {
+    echo "This script must be run as root or with sudo.\n";
+    exit(1);
+}
 
 function verifyPhpVersion($phpVersion) {
     $phpSocket = "/var/run/php/php" . $phpVersion . "-fpm.sock";

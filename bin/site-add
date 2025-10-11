@@ -1,2 +1,2 @@
 #!/bin/bash
-php /usr/serverok/server-manager/sok-add-site.php "$@"
+php /usr/serverok/server-manager/sok-site-add.php "$@"
