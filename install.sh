@@ -30,8 +30,11 @@ else
   git pull
 fi
 
-echo "Adding /usr/serverok/bin to PATH..."
-echo 'export PATH="$PATH:/usr/serverok/bin"' > /etc/profile.d/serverok.sh
+echo "Making scripts in /usr/serverok/server-manager/bin executable..."
+chmod +x /usr/serverok/server-manager/bin/*
+
+echo "Adding /usr/serverok/server-manager/bin to PATH..."
+echo 'export PATH="$PATH:/usr/serverok/server-manager/bin"' > /etc/profile.d/serverok.sh
 source /etc/profile.d/serverok.sh
 
 echo "Installation complete."
