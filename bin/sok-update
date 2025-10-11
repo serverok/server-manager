@@ -1,0 +1,9 @@
+#!/bin/bash
+# This script updates the server-manager by pulling the latest code from the git repository.
+
+set -e
+echo "Changing directory to /usr/serverok/server-manager..."
+cd /usr/serverok/server-manager
+echo "Pulling latest changes from the main branch..."
+git pull origin main
+echo "Update complete."
