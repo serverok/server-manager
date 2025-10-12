@@ -33,6 +33,8 @@ fi
 echo "Making scripts in /usr/serverok/server-manager/bin executable..."
 chmod +x /usr/serverok/server-manager/bin/*
 
+rm -f /usr/local/bin/sok-site-add
+
 echo "Creating symlinks in /usr/local/bin..."
 for file in /usr/serverok/server-manager/bin/*; do
   if [ -f "$file" ]; then
