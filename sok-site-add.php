@@ -110,7 +110,7 @@ function linuxAddUser($domainName, $username, $password) {
 
 
 function createPhpfpmConfig($username, $phpVersion) {
-    $content = file_get_contents("templates/nginx/php-fpm-pool.txt");
+    $content = file_get_contents("templates/php-fpm-pool.conf");
     $content = str_replace("POOL_NAME", $username, $content);
     $content = str_replace("FPM_USER", $username, $content);
     $fileLocation = "/etc/php/{$phpVersion}/fpm/pool.d/{$username}.conf";
@@ -119,9 +119,9 @@ function createPhpfpmConfig($username, $phpVersion) {
 
 function createNginxConfig($domainName, $username, $appType) {
     if ($appType == "laravel") {
-        $content = file_get_contents("templates/nginx/vhosts/nginx-laravel-vhost-ssl.txt");
+        $content = file_get_contents("templates/nginx-laravel-vhost-ssl.conf");
     } else {
-        $content = file_get_contents("templates/nginx/vhosts/nginx-vhost-ssl.txt");
+        $content = file_get_contents("templates/nginx-vhost-ssl.conf");
     }
     $content = str_replace("POOL_NAME", $username, $content);
     $content = str_replace("FQDN", $domainName, $content);
@@ -131,9 +131,9 @@ function createNginxConfig($domainName, $username, $appType) {
 
 function createApacheConfig($domainName, $username, $appType) {
     if ($appType == "laravel") {
-        $content = file_get_contents("templates/apache/vhost-laravel.conf");
+        $content = file_get_contents("templates/apache-vhost-laravel.conf");
     } else {
-        $content = file_get_contents("templates/apache/vhost.conf");
+        $content = file_get_contents("templates/apache-vhost.conf");
     }
     $content = str_replace("POOL_NAME", $username, $content);
     $content = str_replace("FQDN", $domainName, $content);
