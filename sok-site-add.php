@@ -101,7 +101,7 @@ function linuxUserExists($username) {
 
 function linuxAddUser($domainName, $username, $password) {
     $encPass = crypt($password, "22");
-    shell_exec("useradd -m -s /bin/bash -d /home/{$domainName}/ -p " . escapeshellarg($encPass) . " " . escapeshellarg($username));
+    shell_exec("useradd -m -s /bin/bash -d /home/" . escapeshellarg($domainName) . "/ -p " . escapeshellarg($encPass) . " " . escapeshellarg($username));
 }
 
 
@@ -307,8 +307,8 @@ shell_exec("mkdir -p " . escapeshellarg($docRoot));
 shell_exec("chown -R " . escapeshellarg($username) . ":" . escapeshellarg($username) . " " . escapeshellarg($docRoot));
 shell_exec("chmod -R 750 " . escapeshellarg("/home/{$domainName}"));
 shell_exec("usermod -aG " . escapeshellarg($username) . " www-data");
-shell_exec("openssl genrsa -out /etc/ssl/{$domainName}.key 2048");
-shell_exec("openssl req -new -x509 -key /etc/ssl/{$domainName}.key -out /etc/ssl/{$domainName}.crt -days 3650 -subj /CN={$domainName}");
+shell_exec("openssl genrsa -out " . escapeshellarg("/etc/ssl/{$domainName}.key") . " 2048");
+shell_exec("openssl req -new -x509 -key " . escapeshellarg("/etc/ssl/{$domainName}.key") . " -out " . escapeshellarg("/etc/ssl/{$domainName}.crt") . " -days 3650 -subj /CN=" . escapeshellarg($domainName));
 
 if ($appType == "laravel") {
     $docRoot = "/home/{$domainName}/html/public/";
@@ -316,7 +316,7 @@ if ($appType == "laravel") {
     shell_exec("chown -R " . escapeshellarg($username) . ":" . escapeshellarg($username) . " " . escapeshellarg($docRoot));
 }
 
-shell_exec("systemctl restart php{$phpVersion}-fpm");
+shell_exec("systemctl restart " . escapeshellcmd("php{$phpVersion}-fpm"));
 
 if ($server == "nginx") {
     shell_exec("systemctl restart nginx");
