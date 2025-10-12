@@ -47,30 +47,27 @@ function findLatestPhpVersion() {
 }
 
 function generatePassword() {
-    $passwordChars = "abcdefghjkmnpqrstuvwxyz234567890";
-    $myPassword = "";
-    $haveNumber = false;
-    for ($i = 0; $i < 20; $i++) {
-        $nextIndex = rand(0, strlen($passwordChars) - 1);
-        if ($i < 2) {
-            $nextIndex = rand(0, 9);
-            $myChar = strtoupper($passwordChars[$nextIndex]);
-        } elseif (rand(0, 10) > 5) {
-            $myChar = strtoupper($passwordChars[$nextIndex]);
-        } else {
-            $myChar = $passwordChars[$nextIndex];
-        }
-        if ($i == 17) {
-            if (!$haveNumber) {
-                $myChar = (string)rand(0, 9);
-            }
-        }
-        if (is_numeric($myChar)) {
-            $haveNumber = true;
-        }
-        $myPassword .= $myChar;
+    $lowercase = 'abcdefghjkmnpqrstuvwxyz';
+    $uppercase = 'ABCDEFGHJKMNPQRSTUVWXYZ';
+    $numbers = '234567890';
+    $allChars = $lowercase . $uppercase . $numbers;
+    
+    $password = '';
+    
+    // Ensure at least one of each type
+    $password .= $lowercase[random_int(0, strlen($lowercase) - 1)];
+    $password .= $uppercase[random_int(0, strlen($uppercase) - 1)];
+    $password .= $numbers[random_int(0, strlen($numbers) - 1)];
+    
+    // Fill the rest of the password length
+    $remainingLength = 20 - strlen($password);
+    $max = strlen($allChars) - 1;
+    for ($i = 0; $i < $remainingLength; $i++) {
+        $password .= $allChars[random_int(0, $max)];
     }
-    return $myPassword;
+    
+    // Shuffle the password to randomize the position of the guaranteed characters
+    return str_shuffle($password);
 }
 
 function verifyDomain($domainName) {
