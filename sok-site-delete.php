@@ -151,35 +151,66 @@ function findPhpVersionForUser($username) {
             }
         }
     }
-    return null; // Return null if not found
+    return null;
 }
 
 function removeWebServerConfig($siteInfo) {
     $domainName = $siteInfo['servername'];
-    $restartedNginx = false;
-    $restartedApache = false;
+    $configRemoved = false;
+
+    // Get the configured web server
+    $webServer = getConfiguredWebServer();
 
     $nginxConf = "/etc/nginx/sites-enabled/{$domainName}.conf";
     if (file_exists($nginxConf)) {
         sok_log("Removing Nginx config: {$nginxConf}", true);
         unlink($nginxConf);
-        shell_exec("systemctl restart nginx");
-        sok_log("Restarted Nginx after removing config for {$domainName}");
-        $restartedNginx = true;
+        $configRemoved = true;
+        
+        if ($webServer === 'nginx') {
+            shell_exec("systemctl restart nginx");
+            sok_log("Restarted Nginx after removing config for {$domainName}");
+        }
     }
 
     $apacheConf = "/etc/apache2/sites-enabled/{$domainName}.conf";
     if (file_exists($apacheConf)) {
         sok_log("Removing Apache config: {$apacheConf}", true);
         unlink($apacheConf);
-        shell_exec("systemctl restart apache2");
-        sok_log("Restarted Apache after removing config for {$domainName}");
-        $restartedApache = true;
+        $configRemoved = true;
+        
+        if ($webServer === 'apache' || $webServer === 'apache2') {
+            shell_exec("systemctl restart apache2");
+            sok_log("Restarted Apache after removing config for {$domainName}");
+        }
     }
 
-    if (!$restartedNginx && !$restartedApache) {
+    if (!$configRemoved) {
         sok_log("No web server config found for {$domainName}", true);
     }
+    
+    if ($configRemoved && !$webServer) {
+        sok_log("Web server config removed but server not restarted (no webserver configured in server-config.json)");
+    }
+}
+
+function getConfiguredWebServer() {
+    $configFile = '/usr/serverok/okpanel/config/webserver';
+    
+    if (!file_exists($configFile)) {
+        sok_log("Server config file not found at {$configFile}, skipping web server restart");
+        return null;
+    }
+    
+    $webServer = trim(file_get_contents($configFile));
+    
+    if (empty($webServer)) {
+        sok_log("Web server config file is empty at {$configFile}, skipping web server restart");
+        return null;
+    }
+    
+    sok_log("Configured web server: {$webServer}");
+    return strtolower($webServer);
 }
 
 function removePhpFpmConfig($siteInfo) {
@@ -209,7 +240,7 @@ function removeMysqlDatabaseAndUser($siteInfo) {
         return;
     }
     $dbName = $siteInfo['dbname'];
-    $dbUser = $siteInfo['dbname']; // Assuming db user is same as db name
+    $dbUser = $siteInfo['dbname'];
 
     $mysqli = new mysqli('localhost', 'root', '');
     if ($mysqli->connect_error) {
