@@ -1,6 +1,6 @@
 <?php
 
-function sok_log($message, $display = false) {
+function sokLog($message, $display = false) {
     $log_file = '/var/log/server-manager.log';
     $formatted_message = date('[Y-m-d H:i:s] ') . $message . PHP_EOL;
     file_put_contents($log_file, $formatted_message, FILE_APPEND);
@@ -13,7 +13,7 @@ function sok_log($message, $display = false) {
 function detectServer() {
     $output = shell_exec('ss -nltp');
     if ($output === null) {
-        sok_log("Error executing ss command", true);
+        sokLog("Error executing ss command", true);
         exit(1);
     }
 
@@ -28,7 +28,7 @@ function detectServer() {
         }
     }
     
-    sok_log("Error: Neither Apache nor Nginx is listening on port 80 or 443.", true);
+    sokLog("Error: Neither Apache nor Nginx is listening on port 80 or 443.", true);
     exit(1);
 }
 
@@ -39,13 +39,13 @@ function getWebServer() {
     if (file_exists($configFile)) {
         $webServer = trim(file_get_contents($configFile));
         if (!empty($webServer) && in_array($webServer, ['nginx', 'apache'])) {
-            sok_log("Web server read from config: {$webServer}");
+            sokLog("Web server read from config: {$webServer}");
             return $webServer;
         }
     }
     
     // Config file doesn't exist or invalid, detect the server
-    sok_log("Config file not found, detecting web server...");
+    sokLog("Config file not found, detecting web server...");
     $webServer = detectServer();
     
     // Save detected server to config file for future use
@@ -54,7 +54,7 @@ function getWebServer() {
         mkdir($configDir, 0755, true);
     }
     file_put_contents($configFile, $webServer);
-    sok_log("Detected web server '{$webServer}' saved to {$configFile}");
+    sokLog("Detected web server '{$webServer}' saved to {$configFile}");
     
     return $webServer;
 }

@@ -8,14 +8,14 @@
 require_once 'includes/functions.php';
 
 if (posix_getuid() !== 0) {
-    sok_log("This script must be run as root or with sudo.", true);
+    sokLog("This script must be run as root or with sudo.", true);
     exit(1);
 }
 
 function verifyPhpVersion($phpVersion) {
     $phpSocket = "/var/run/php/php" . $phpVersion . "-fpm.sock";
     if (!file_exists($phpSocket)) {
-        sok_log("ERROR: PHP version {$phpVersion} not found. Missing socket {$phpSocket}", true);
+        sokLog("ERROR: PHP version {$phpVersion} not found. Missing socket {$phpSocket}", true);
         exit(1);
     }
     return true;
@@ -74,25 +74,25 @@ function generatePassword() {
 
 function verifyDomain($domainName) {
     if (!preg_match("/^([A-Za-z0-9-\\.]+)$/", $domainName)) {
-        sok_log("Invalid domain name: {$domainName}", true);
+        sokLog("Invalid domain name: {$domainName}", true);
         exit(1);
     }
 }
 
 function verifyPassword($password) {
     if (!preg_match("/^([A-Za-z0-9-\\.]+)$/", $password)) {
-        sok_log("Invalid password: {$password}", true);
+        sokLog("Invalid password: {$password}", true);
         exit(1);
     }
 }
 
 function verifyUsername($username) {
     if (strlen($username) > 32) {
-        sok_log("Error: username must be less than 32 chars", true);
+        sokLog("Error: username must be less than 32 chars", true);
         exit(1);
     }
     if (!preg_match("/^([A-Za-z0-9]+)$/", $username)) {
-        sok_log("Invalid user name {$username}", true);
+        sokLog("Invalid user name {$username}", true);
         exit(1);
     }
 }
@@ -143,7 +143,7 @@ function createApacheConfig($domainName, $username, $appType) {
 function findIp() {
     $ip = file_get_contents("http://checkip.amazonaws.com");
     if ($ip === false) {
-        echo "Failed to find IP address\n";
+        sokLog("Failed to find IP address", true);
         exit(1);
     }
     return trim($ip);
@@ -178,27 +178,27 @@ function createMysqlDatabaseAndUser($username, $passwordMysql) {
     // Connect to MySQL as root (passwordless)
     $mysqli = new mysqli('localhost', 'root', '');
     if ($mysqli->connect_error) {
-        echo "MySQL Connection failed: " . $mysqli->connect_error . "\n";
+        sokLog("MySQL Connection failed: " . $mysqli->connect_error, true);
         exit(1);
     }
 
     // Create Database
     if (!$mysqli->query("CREATE DATABASE `{$dbName}`")) {
-        echo "Error creating database {$dbName}: " . $mysqli->error . "\n";
+        sokLog("Error creating database {$dbName}: " . $mysqli->error, true);
         $mysqli->close();
         exit(1);
     }
 
     // Create User
     if (!$mysqli->query("CREATE USER '{$dbUser}'@'localhost' IDENTIFIED BY '{$passwordMysql}'")) {
-        echo "Error creating user {$dbUser}: " . $mysqli->error . "\n";
+        sokLog("Error creating user {$dbUser}: " . $mysqli->error, true);
         $mysqli->close();
         exit(1);
     }
 
     // Grant Privileges
     if (!$mysqli->query("GRANT ALL PRIVILEGES ON `{$dbName}`.* TO '{$dbUser}'@'localhost'")) {
-        echo "Error granting privileges to {$dbUser}: " . $mysqli->error . "\n";
+        sokLog("Error granting privileges to {$dbUser}: " . $mysqli->error, true);
         $mysqli->close();
         exit(1);
     }
@@ -224,7 +224,7 @@ if (isset($options['u'])) {
 } elseif (isset($options['user'])) {
     $username = $options['user'];
 } else {
-    echo "ERROR: Please specify username with -u or --user option.\n";
+    sokLog("ERROR: Please specify username with -u or --user option.", true);
     exit(1);
 }
 
@@ -241,10 +241,10 @@ if (isset($options['php'])) {
 } else {
     $phpVersion = findLatestPhpVersion();
     if ($phpVersion === null) {
-        echo "ERROR: Could not automatically determine PHP version. Please specify one with --php option.\n";
+        sokLog("ERROR: Could not automatically determine PHP version. Please specify one with --php option.", true);
         exit(1);
     }
-    echo "PHP version not specified, using latest found version: {$phpVersion}\n";
+    sokLog("PHP version not specified, using latest found version: {$phpVersion}", true);
 }
 
 $appType = "wp";
@@ -256,7 +256,7 @@ if (isset($options['app'])) {
 }
 
 $server = getWebServer();
-echo "Server = {$server}\n";
+sokLog("Server = {$server}", true);
 
 verifyPhpVersion($phpVersion);
 verifyUsername($username);
@@ -264,7 +264,7 @@ verifyDomain($domainName);
 verifyPassword($password);
 
 if (linuxUserExists($username)) {
-    echo "ERROR: User {$username} already exists!\n";
+    sokLog("ERROR: User {$username} already exists!", true);
     exit(1);
 }
 
@@ -306,28 +306,28 @@ if ($server == "nginx") {
 
 createSiteDataFile($domainName, $username, $docRoot, $phpVersion, $appType);
 
-echo "SFTP/SSH {$domainName}\n\n";
-echo "IP = {$ipAddress}\n";
-echo "Port = 22\n";
-echo "User = {$username}\n";
-echo "PW = {$password}\n\n";
+sokLog("SFTP/SSH {$domainName}\n", true);
+sokLog("IP = {$ipAddress}", true);
+sokLog("Port = 22", true);
+sokLog("User = {$username}", true);
+sokLog("PW = {$password}\n", true);
 
-echo "MySQL\n\n";
+sokLog("MySQL\n", true);
 
-echo "DB = {$username}_db\n";
-echo "User = {$username}_db\n";
-echo "PW = {$passwordMysql}\n\n";
+sokLog("DB = {$username}_db", true);
+sokLog("User = {$username}_db", true);
+sokLog("PW = {$passwordMysql}\n", true);
 
-echo "phpMyAdmin\n\n";
+sokLog("phpMyAdmin\n", true);
 
-echo "http://{$ipAddress}:7777\n";
-echo "User = {$username}_db\n";
-echo "PW = {$passwordMysql}\n\n";
+sokLog("http://{$ipAddress}:7777", true);
+sokLog("User = {$username}_db", true);
+sokLog("PW = {$passwordMysql}\n", true);
 
 if ($server == "nginx") {
-    echo "certbot --authenticator webroot --webroot-path " . escapeshellarg($docRoot) . " --installer nginx -m admin@serverok.in --agree-tos --no-eff-email -d {$domainName} -d www.{$domainName}\n";
+    sokLog("certbot --authenticator webroot --webroot-path " . escapeshellarg($docRoot) . " --installer nginx -m admin@serverok.in --agree-tos --no-eff-email -d {$domainName} -d www.{$domainName}", true);
 } else {
-    echo "certbot --authenticator webroot --webroot-path " . escapeshellarg($docRoot) . " --installer apache -m admin@serverok.in --agree-tos --no-eff-email -d {$domainName} -d www.{$domainName}\n";
+    sokLog("certbot --authenticator webroot --webroot-path " . escapeshellarg($docRoot) . " --installer apache -m admin@serverok.in --agree-tos --no-eff-email -d {$domainName} -d www.{$domainName}", true);
 }
 
 ?>
