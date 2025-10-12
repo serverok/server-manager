@@ -3,4 +3,8 @@
 cd /usr/serverok/server-manager > /dev/null 2>&1
 git pull origin main > /dev/null 2>&1
 
+touch /var/log/server-manager.log
+chmod 600 /var/log/server-manager.log
+chown root:root /var/log/server-manager.log
+
 php /usr/serverok/server-manager/sok-site-add.php "$@"
