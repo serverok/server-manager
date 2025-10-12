@@ -13,7 +13,7 @@ if (posix_getuid() !== 0) {
 }
 
 if ($argc < 2) {
-    sokLog("Usage: php sok-site-backup.php <domain.tld>", true);
+    sokLog("Usage: sok-site-backup <domain.tld>", true);
     exit(1);
 }
 
