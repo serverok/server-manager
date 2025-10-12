@@ -5,13 +5,17 @@
 // Mail: admin@serverok.in
 // Delete a web site after taking a backup.
 
+require_once __DIR__ . '/includes/functions.php';
+
 if (posix_getuid() !== 0) {
-    echo "This script must be run as root or with sudo.\n";
+    $msg = "This script must be run as root or with sudo.";
+    sok_log($msg, true);
     exit(1);
 }
 
 if ($argc < 2) {
-    echo "Usage: php sok-site-delete.php <domain.tld>\n";
+    $msg = "Usage: php sok-site-delete.php <domain.tld>";
+    sok_log($msg, true);
     exit(1);
 }
 
@@ -20,42 +24,54 @@ $siteDataFile = "/usr/serverok/sitedata/{$domainName}";
 
 // --- Main Execution ---
 
+sok_log("Starting deletion process for {$domainName}", true);
 echo "--- Starting deletion process for {$domainName} ---\n";
 
 // 1. Take a backup first
+sok_log("Step 1: Attempting to back up the site before deletion...");
 echo "\nStep 1: Attempting to back up the site before deletion...\n";
 if (!backupSite($domainName)) {
-    echo "FATAL: Backup failed. Aborting deletion process to prevent data loss.\n";
+    $msg = "FATAL: Backup failed for {$domainName}. Aborting deletion process to prevent data loss.";
+    sok_log($msg, true);
     exit(1);
 }
+sok_log("Backup completed successfully for {$domainName}");
 echo "Backup completed successfully.\n";
 
 // 2. Gather site information
+sok_log("Step 2: Gathering site information for {$domainName}");
 echo "\nStep 2: Gathering site information...\n";
 $siteInfo = getSiteInfo($domainName, $siteDataFile);
 if (empty($siteInfo)) {
-    echo "FATAL: Could not gather required site information for {$domainName}. Aborting.\n";
+    $msg = "FATAL: Could not gather required site information for {$domainName}. Aborting.";
+    sok_log($msg, true);
     exit(1);
 }
+sok_log("Successfully gathered site information for {$domainName}: " . json_encode($siteInfo));
 echo "Successfully gathered site information.\n";
 print_r($siteInfo);
 
 // 3. Remove Web Server Config
+sok_log("Step 3: Removing web server configuration for {$domainName}");
 echo "\nStep 3: Removing web server configuration...\n";
 removeWebServerConfig($siteInfo);
 
 // 4. Remove PHP-FPM Config
+sok_log("Step 4: Removing PHP-FPM configuration for {$domainName}");
 echo "\nStep 4: Removing PHP-FPM configuration...\n";
 removePhpFpmConfig($siteInfo);
 
 // 5. Remove MySQL Database and User
+sok_log("Step 5: Removing MySQL database and user for {$domainName}");
 echo "\nStep 5: Removing MySQL database and user...\n";
 removeMysqlDatabaseAndUser($siteInfo);
 
 // 6. Remove Linux User and Files
+sok_log("Step 6: Removing Linux user and all associated files for {$domainName}");
 echo "\nStep 6: Removing Linux user and all associated files...\n";
 removeLinuxUser($siteInfo);
 
+sok_log("Site {$domainName} has been successfully deleted.", true);
 echo "\n--- Site {$domainName} has been successfully deleted. ---\n";
 
 
@@ -64,6 +80,8 @@ echo "\n--- Site {$domainName} has been successfully deleted. ---\n";
 function backupSite($domainName) {
     $backupScript = __DIR__ . '/sok-site-backup.php';
     if (!file_exists($backupScript)) {
+        $msg = "Error: Backup script '{$backupScript}' not found.";
+        sok_log($msg);
         echo "Error: Backup script '{$backupScript}' not found.\n";
         return false;
     }
@@ -78,17 +96,25 @@ function getSiteInfo($domainName, $siteDataFile) {
     if (file_exists($siteDataFile)) {
         $data = json_decode(file_get_contents($siteDataFile), true);
         if (isset($data['username'])) {
+            sok_log("Site data loaded from {$siteDataFile} for {$domainName}");
             return $data;
         }
     }
 
+    sok_log("Site data file not found or incomplete for {$domainName}. Attempting to infer information...");
     echo "Site data file not found or incomplete. Attempting to infer information...\n";
     
     $username = getUsernameFromHomeDir($domainName);
-    if (!$username) return [];
+    if (!$username) {
+        sok_log("Failed to get username from home directory for {$domainName}");
+        return [];
+    }
 
     $phpVersion = findPhpVersionForUser($username);
-    if (!$phpVersion) return [];
+    if (!$phpVersion) {
+        sok_log("Failed to find PHP version for user {$username}");
+        return [];
+    }
 
     return [
         'servername' => $domainName,
@@ -108,15 +134,20 @@ function getUsernameFromHomeDir($domainName) {
              $ownerInfo = posix_getpwuid($ownerId);
              if ($ownerInfo) return $ownerInfo['name'];
         }
+        $msg = "Error: Home directory not found for {$domainName}.";
+        sok_log($msg);
         echo "Error: Home directory not found for {$domainName}.\n";
         return null;
     }
     $ownerId = fileowner($homeDir);
     $ownerInfo = posix_getpwuid($ownerId);
     if ($ownerInfo) {
+        sok_log("Found username '{$ownerInfo['name']}' from home directory owner for {$domainName}");
         echo "Found username '{$ownerInfo['name']}' from home directory owner.\n";
         return $ownerInfo['name'];
     }
+    $msg = "Error: Could not determine owner of {$homeDir}.";
+    sok_log($msg);
     echo "Error: Could not determine owner of {$homeDir}.\n";
     return null;
 }
@@ -130,6 +161,7 @@ function findPhpVersionForUser($username) {
         if (is_dir("{$phpBaseDir}/{$version}") && preg_match('/^\d\.\d$/', $version)) {
             $poolFile = "{$phpBaseDir}/{$version}/fpm/pool.d/{$username}.conf";
             if (file_exists($poolFile)) {
+                sok_log("Found PHP version {$version} for user {$username}");
                 return $version;
             }
         }
@@ -144,27 +176,34 @@ function removeWebServerConfig($siteInfo) {
 
     $nginxConf = "/etc/nginx/sites-enabled/{$domainName}.conf";
     if (file_exists($nginxConf)) {
+        sok_log("Removing Nginx config: {$nginxConf}");
         echo "Removing Nginx config: {$nginxConf}\n";
         unlink($nginxConf);
         shell_exec("systemctl restart nginx");
+        sok_log("Restarted Nginx after removing config for {$domainName}");
         $restartedNginx = true;
     }
 
     $apacheConf = "/etc/apache2/sites-enabled/{$domainName}.conf";
     if (file_exists($apacheConf)) {
+        sok_log("Removing Apache config: {$apacheConf}");
         echo "Removing Apache config: {$apacheConf}\n";
         unlink($apacheConf);
         shell_exec("systemctl restart apache2");
+        sok_log("Restarted Apache after removing config for {$domainName}");
         $restartedApache = true;
     }
 
     if (!$restartedNginx && !$restartedApache) {
+        sok_log("No web server config found for {$domainName}");
         echo "No web server config found for {$domainName}.\n";
     }
 }
 
 function removePhpFpmConfig($siteInfo) {
     if (!isset($siteInfo['username']) || !isset($siteInfo['php_version'])) {
+        $msg = "Warning: Username or PHP version not defined, cannot remove PHP-FPM config.";
+        sok_log($msg);
         echo "Warning: Username or PHP version not defined, cannot remove PHP-FPM config.\n";
         return;
     }
@@ -173,16 +212,21 @@ function removePhpFpmConfig($siteInfo) {
     
     $poolFile = "/etc/php/{$phpVersion}/fpm/pool.d/{$username}.conf";
     if (file_exists($poolFile)) {
+        sok_log("Removing PHP-FPM config: {$poolFile}");
         echo "Removing PHP-FPM config: {$poolFile}\n";
         unlink($poolFile);
         shell_exec("systemctl restart php{$phpVersion}-fpm");
+        sok_log("Restarted PHP {$phpVersion} FPM after removing config for {$username}");
     } else {
+        sok_log("No PHP-FPM config found for user {$username} with PHP version {$phpVersion}");
         echo "No PHP-FPM config found for user {$username} with PHP version {$phpVersion}.\n";
     }
 }
 
 function removeMysqlDatabaseAndUser($siteInfo) {
     if (!isset($siteInfo['dbname'])) {
+        $msg = "Warning: DB name not defined, cannot remove MySQL database/user.";
+        sok_log($msg);
         echo "Warning: DB name not defined, cannot remove MySQL database/user.\n";
         return;
     }
@@ -191,36 +235,46 @@ function removeMysqlDatabaseAndUser($siteInfo) {
 
     $mysqli = new mysqli('localhost', 'root', '');
     if ($mysqli->connect_error) {
+        $msg = "Error: MySQL Connection failed: " . $mysqli->connect_error;
+        sok_log($msg);
         echo "Error: MySQL Connection failed: " . $mysqli->connect_error . "\n";
         return;
     }
 
+    sok_log("Dropping MySQL database `{$dbName}`");
     echo "Dropping MySQL database `{$dbName}`...\n";
     $mysqli->query("DROP DATABASE IF EXISTS `{$dbName}`");
 
+    sok_log("Dropping MySQL user '{$dbUser}'@'localhost'");
     echo "Dropping MySQL user '{$dbUser}'@'localhost'...\n";
     $mysqli->query("DROP USER IF EXISTS '{$dbUser}'@'localhost'");
     
     $mysqli->query("FLUSH PRIVILEGES");
     $mysqli->close();
+    sok_log("MySQL cleanup complete for {$dbName}");
     echo "MySQL cleanup complete.\n";
 }
 
 function removeLinuxUser($siteInfo) {
     if (!isset($siteInfo['username'])) {
+        $msg = "Warning: Username not defined, cannot remove Linux user.";
+        sok_log($msg);
         echo "Warning: Username not defined, cannot remove Linux user.\n";
         return;
     }
     $username = $siteInfo['username'];
 
     if (posix_getpwnam($username) === false) {
+        sok_log("Linux user {$username} does not exist. Skipping.");
         echo "Linux user {$username} does not exist. Skipping.\n";
         exit;
     }
 
+    sok_log("Deleting user '{$username}' and their home directory");
     echo "Deleting user '{$username}' and their home directory...\n";
     $command = "userdel -r " . escapeshellarg($username);
     shell_exec($command);
+    sok_log("User '{$username}' removed successfully");
     echo "User '{$username}' removed.\n";
 }
 
