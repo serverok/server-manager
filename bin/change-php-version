@@ -1,0 +1,2 @@
+#!/bin/bash
+php /usr/serverok/server-manager/change-php-version.php "$@"
