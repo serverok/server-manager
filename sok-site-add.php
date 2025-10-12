@@ -107,17 +107,10 @@ function linuxAddUser($domainName, $username, $password) {
     shell_exec("useradd -m -s /bin/bash -d /home/{$domainName}/ -p " . escapeshellarg($encPass) . " " . escapeshellarg($username));
 }
 
-function getUrlContent($url) {
-    $content = file_get_contents($url);
-    if ($content === false) {
-        echo "Failed to get content from {$url}\n";
-        exit(1);
-    }
-    return $content;
-}
+
 
 function createPhpfpmConfig($username, $phpVersion) {
-    $content = getUrlContent("https://raw.githubusercontent.com/serverok/server-setup/master/config/nginx/php-fpm-pool.txt");
+    $content = file_get_contents("templates/nginx/php-fpm-pool.txt");
     $content = str_replace("POOL_NAME", $username, $content);
     $content = str_replace("FPM_USER", $username, $content);
     $fileLocation = "/etc/php/{$phpVersion}/fpm/pool.d/{$username}.conf";
@@ -126,9 +119,9 @@ function createPhpfpmConfig($username, $phpVersion) {
 
 function createNginxConfig($domainName, $username, $appType) {
     if ($appType == "laravel") {
-        $content = getUrlContent("https://raw.githubusercontent.com/serverok/server-setup/master/config/nginx/vhosts/nginx-laravel-vhost-ssl.txt");
+        $content = file_get_contents("templates/nginx/vhosts/nginx-laravel-vhost-ssl.txt");
     } else {
-        $content = getUrlContent("https://raw.githubusercontent.com/serverok/server-setup/master/config/nginx/vhosts/nginx-vhost-ssl.txt");
+        $content = file_get_contents("templates/nginx/vhosts/nginx-vhost-ssl.txt");
     }
     $content = str_replace("POOL_NAME", $username, $content);
     $content = str_replace("FQDN", $domainName, $content);
@@ -138,9 +131,9 @@ function createNginxConfig($domainName, $username, $appType) {
 
 function createApacheConfig($domainName, $username, $appType) {
     if ($appType == "laravel") {
-        $content = getUrlContent("https://raw.githubusercontent.com/serverok/server-setup/master/config/apache/vhost-laravel.conf");
+        $content = file_get_contents("templates/apache/vhost-laravel.conf");
     } else {
-        $content = getUrlContent("https://raw.githubusercontent.com/serverok/server-setup/master/config/apache/vhost.conf");
+        $content = file_get_contents("templates/apache/vhost.conf");
     }
     $content = str_replace("POOL_NAME", $username, $content);
     $content = str_replace("FQDN", $domainName, $content);
