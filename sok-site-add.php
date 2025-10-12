@@ -5,15 +5,17 @@
 // Mail: admin@serverok.in
 // Create web site in Nginx/Apache Server.
 
+require_once 'includes/functions.php';
+
 if (posix_getuid() !== 0) {
-    echo "This script must be run as root or with sudo.\n";
+    sok_log("This script must be run as root or with sudo.", true);
     exit(1);
 }
 
 function verifyPhpVersion($phpVersion) {
     $phpSocket = "/var/run/php/php" . $phpVersion . "-fpm.sock";
     if (!file_exists($phpSocket)) {
-        echo "ERROR: PHP version {$phpVersion} not found. Missing socket {$phpSocket}\n";
+        sok_log("ERROR: PHP version {$phpVersion} not found. Missing socket {$phpSocket}", true);
         exit(1);
     }
     return true;
@@ -72,25 +74,25 @@ function generatePassword() {
 
 function verifyDomain($domainName) {
     if (!preg_match("/^([A-Za-z0-9-\\.]+)$/", $domainName)) {
-        echo "Invalid domain name: {$domainName}\n";
+        sok_log("Invalid domain name: {$domainName}", true);
         exit(1);
     }
 }
 
 function verifyPassword($password) {
     if (!preg_match("/^([A-Za-z0-9-\\.]+)$/", $password)) {
-        echo "Invalid password: {$password}\n";
+        sok_log("Invalid password: {$password}", true);
         exit(1);
     }
 }
 
 function verifyUsername($username) {
     if (strlen($username) > 32) {
-        echo "Error: username must be less than 32 chars\n";
+        sok_log("Error: username must be less than 32 chars", true);
         exit(1);
     }
     if (!preg_match("/^([A-Za-z0-9]+)$/", $username)) {
-        echo "Invalid user name {$username}\n";
+        sok_log("Invalid user name {$username}", true);
         exit(1);
     }
 }
