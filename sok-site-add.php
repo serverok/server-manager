@@ -244,7 +244,7 @@ if (isset($options['php'])) {
         sokLog("ERROR: Could not automatically determine PHP version. Please specify one with --php option.", true);
         exit(1);
     }
-    sokLog("PHP version not specified, using latest found version: {$phpVersion}", true);
+    sokLog("PHP version not specified, using latest found version: {$phpVersion}");
 }
 
 $appType = "wp";
@@ -256,7 +256,7 @@ if (isset($options['app'])) {
 }
 
 $server = getWebServer();
-sokLog("Server = {$server}", true);
+sokLog("Server = {$server}");
 
 verifyPhpVersion($phpVersion);
 verifyUsername($username);
