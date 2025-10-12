@@ -190,27 +190,8 @@ function removeWebServerConfig($siteInfo) {
     }
     
     if ($configRemoved && !$webServer) {
-        sok_log("Web server config removed but server not restarted (no webserver configured in server-config.json)");
+        sok_log("Web server config removed but server not restarted (no webserver configured in config file)");
     }
-}
-
-function getConfiguredWebServer() {
-    $configFile = '/usr/serverok/okpanel/config/webserver';
-    
-    if (!file_exists($configFile)) {
-        sok_log("Server config file not found at {$configFile}, skipping web server restart");
-        return null;
-    }
-    
-    $webServer = trim(file_get_contents($configFile));
-    
-    if (empty($webServer)) {
-        sok_log("Web server config file is empty at {$configFile}, skipping web server restart");
-        return null;
-    }
-    
-    sok_log("Configured web server: {$webServer}");
-    return strtolower($webServer);
 }
 
 function removePhpFpmConfig($siteInfo) {
