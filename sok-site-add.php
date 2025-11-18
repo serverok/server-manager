@@ -48,6 +48,36 @@ function findLatestPhpVersion() {
     return end($versions);
 }
 
+function listAvailablePhpVersions() {
+    $phpRunDir = '/var/run/php/';
+    if (!is_dir($phpRunDir)) {
+        sokLog("ERROR: PHP directory not found at {$phpRunDir}", true);
+        exit(1);
+    }
+    $files = scandir($phpRunDir);
+    $versions = [];
+
+    if ($files === false) {
+        sokLog("ERROR: Could not read PHP directory at {$phpRunDir}", true);
+        exit(1);
+    }
+
+    foreach ($files as $file) {
+        if (preg_match('/^php(\d+\.\d+)-fpm\.sock$/', $file, $matches)) {
+            $versions[] = $matches[1];
+        }
+    }
+
+    if (empty($versions)) {
+        sokLog("No PHP versions found in {$phpRunDir}", true);
+    } else {
+        sokLog("Available PHP versions:", true);
+        foreach ($versions as $version) {
+            sokLog("- {$version}", true);
+        }
+    }
+}
+
 function generatePassword() {
     $lowercase = 'abcdefghjkmnpqrstuvwxyz';
     $uppercase = 'ABCDEFGHJKMNPQRSTUVWXYZ';
