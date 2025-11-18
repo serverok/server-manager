@@ -16,6 +16,7 @@ function verifyPhpVersion($phpVersion) {
     $phpSocket = "/var/run/php/php" . $phpVersion . "-fpm.sock";
     if (!file_exists($phpSocket)) {
         sokLog("ERROR: PHP version {$phpVersion} not found. Missing socket {$phpSocket}", true);
+        listAvailablePhpVersions();
         exit(1);
     }
     return true;
