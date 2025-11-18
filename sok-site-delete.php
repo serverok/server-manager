@@ -22,50 +22,33 @@ if ($argc < 2) {
 $domainName = $argv[1];
 $siteDataFile = "/usr/serverok/sitedata/{$domainName}";
 
-// --- Main Execution ---
+$siteDocRoot = "/home/{$domainName}";
+
+if (! is_dir($siteDocRoot)) {
+    die("Site {$domainName} not found.\n");
+}
 
 sokLog("--- Starting deletion process for {$domainName} ---", true);
 
-// 1. Take a backup first
-sokLog("\nStep 1: Attempting to back up the site before deletion...", true);
-if (!backupSite($domainName)) {
-    $msg = "FATAL: Backup failed for {$domainName}. Aborting deletion process to prevent data loss.";
-    sokLog($msg, true);
-    exit(1);
-}
-sokLog("Backup completed successfully for {$domainName}", true);
-
-// 2. Gather site information
 sokLog("\nStep 2: Gathering site information for {$domainName}...", true);
+
 $siteInfo = getSiteInfo($domainName, $siteDataFile);
+
 if (empty($siteInfo)) {
     $msg = "FATAL: Could not gather required site information for {$domainName}. Aborting.";
     sokLog($msg, true);
     exit(1);
 }
+
 sokLog("Successfully gathered site information for {$domainName}: " . json_encode($siteInfo));
 
-
-// 3. Remove Web Server Config
-sokLog("\nStep 3: Removing web server configuration for {$domainName}...", true);
 removeWebServerConfig($siteInfo);
-
-// 4. Remove PHP-FPM Config
-sokLog("\nStep 4: Removing PHP-FPM configuration for {$domainName}...", true);
 removePhpFpmConfig($siteInfo);
-
-// 5. Remove MySQL Database and User
-sokLog("\nStep 5: Removing MySQL database and user for {$domainName}...", true);
 removeMysqlDatabaseAndUser($siteInfo);
-
-// 6. Remove Linux User and Files
-sokLog("\nStep 6: Removing Linux user and all associated files for {$domainName}...", true);
 removeLinuxUser($siteInfo);
 
 sokLog("\n--- Site {$domainName} has been successfully deleted. ---", true);
 
-
-// --- Functions ---
 
 function backupSite($domainName) {
     $backupScript = __DIR__ . '/sok-site-backup.php';
@@ -257,7 +240,7 @@ function removeLinuxUser($siteInfo) {
     sokLog("Deleting user '{$username}' and their home directory...", true);
     $command = "userdel -r " . escapeshellarg($username);
     shell_exec($command);
+    $command = "groupdel " . escapeshellarg($username);
+    shell_exec($command);
     sokLog("User '{$username}' removed successfully", true);
 }
-
-?>
