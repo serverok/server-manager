@@ -30,6 +30,12 @@ else
   git pull
 fi
 
+cd /tmp
+wget https://cdn.serverok.in/sok-log-analyzer.tgz -O sok-log-analyzer.tgz 
+tar -xzvf sok-log-analyzer.tgz
+mv sok-log-analyzer /usr/local/bin/
+rm -f sok-log-analyzer.tgz
+
 echo "Making scripts in /usr/serverok/server-manager/bin executable..."
 chmod +x /usr/serverok/server-manager/bin/*
 
