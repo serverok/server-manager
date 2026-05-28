@@ -1,0 +1,3 @@
+#!/bin/bash
+
+php /usr/serverok/server-manager/proxy2apache.php "$@"
