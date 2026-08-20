@@ -9,6 +9,26 @@ function sokLog($message, $display = false) {
     }
 }
 
+function runCommand($command, $description = null) {
+    $output = [];
+    $returnVar = 1;
+    exec($command, $output, $returnVar);
+
+    if ($returnVar !== 0) {
+        $label = $description ?: $command;
+        sokLog("Command failed (exit {$returnVar}): {$command}");
+        if (!empty($output)) {
+            // The command's own stderr is the only thing that explains why it
+            // failed, so it has to reach the log and not just the console.
+            sokLog("{$label} failed: " . implode(' | ', $output), true);
+        } else {
+            sokLog("{$label} failed with exit code {$returnVar}.", true);
+        }
+    }
+
+    return $returnVar === 0;
+}
+
 function detectServer() {
     $output = shell_exec('ss -nltp');
     if ($output === null) {
